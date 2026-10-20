@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MoviGo — Tus encargos en manos seguras</title>
+  <style>
+    :root {
+      --primary: #0066cc;
+      --secondary: #004080;
+      --accent: #25D366;
+      --bg: #f4f7f6;
+      --card: #ffffff;
+      --text: #333333;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg);
+      color: var(--text);
+    }
+    header {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      text-align: center;
+      padding: 2.5rem 1rem 3rem;
+    }
+    header h1 { margin: 0; font-size: 2.5rem; letter-spacing: 1px; }
+    header p { margin-top: 0.5rem; font-style: italic; opacity: 0.9; font-size: 1.1rem; }
+    
+    .container {
+      max-width: 650px;
+      margin: -30px auto 40px;
+      padding: 0 15px;
+    }
+    .card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      margin-bottom: 25px;
+    }
+    h2 { color: var(--primary); font-size: 1.3rem; margin-top: 0; border-bottom: 2px solid #eef6ff; padding-bottom: 8px; }
+    label { font-weight: bold; font-size: 0.9rem; display: block; margin-top: 14px; }
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      margin-top: 6px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-size: 0.95rem;
+    }
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 14px 20px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 20px;
+      transition: background 0.3s ease;
+    }
+    button:hover { background: var(--secondary); }
+    .btn-whatsapp {
+      background: var(--accent);
+    }
+    .btn-whatsapp:hover {
+      background: #1eb854;
+    }
+    
+    /* Buscador de pedido */
+    .search-box { display: flex; gap: 10px; margin-top: 10px; }
+    .search-box input { margin-top: 0; }
+    .search-box button { margin-top: 0; width: auto; white-space: nowrap; }
+    
+    /* Timeline de Estado */
+    .status-result {
+      margin-top: 20px;
+      padding: 15px;
+      background: #eef6ff;
+      border-left: 5px solid var(--primary);
+      border-radius: 6px;
+      display: none;
+    }
+    .badge {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 15px;
+      color: white;
+      font-weight: bold;
+      font-size: 0.85rem;
+    }
+    .status-recibido { background: #e6a23c; }
+    .status-proceso { background: #409eff; }
+    .status-camino { background: #909399; }
+    .status-entregado { background: #67c23a; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>MoviGo</h1>
+    <p>Tus encargos en manos seguras</p>
+  </header>
+
+  <div class="container">
+    
+    <!-- MÓDULO 1: CONSULTAR PEDIDO -->
+    <div class="card">
+      <h2>Rastrear un Encargo</h2>
+      <p style="font-size: 0.85rem; color: #666;">Ingresa tu código de seguimiento para ver el estado actual:</p>
+      <div class="search-box">
+        <input type="text" id="orderInput" placeholder="Ejemplo: MG-101">
+        <button onclick="buscarPedido()">Buscar</button>
+      </div>
+      
+      <div id="statusResult" class="status-result">
+        <h3 id="resultCode" style="margin:0 0 10px 0; color: var(--secondary);"></h3>
+        <p style="margin: 5px 0;"><strong>Estado:</strong> <span id="resultBadge" class="badge"></span></p>
+        <p style="margin: 5px 0;"><strong>Detalle:</strong> <span id="resultDetail"></span></p>
+        <p style="margin: 5px 0; font-size: 0.85rem; color: #555;"><strong>Última actualización:</strong> <span id="resultTime"></span></p>
+      </div>
+    </div>
+
+    <!-- MÓDULO 2: SOLICITAR NUEVO ENCARGO -->
+    <div class="card">
+      <h2>Solicitar un Nuevo Encargo</h2>
+      <form id="orderForm" onsubmit="generarPedido(event)">
+        
+        <label for="tipoCarga">Tipo de Carga / Vehículo Requerido:</label>
+        <select id="tipoCarga" required>
+          <option value="Ligera (Bicicleta)">Ligera — Documentos, compras pequeñas, paquetes ligeros (En Bici)</option>
+          <option value="Pesada / Voluminosa (Transporte Especial)">Pesada / Voluminosa — Combos, electrodomésticos, varios bultos (Transporte Especial)</option>
+        </select>
+
+        <label for="cliente">Nombre de quien solicita / paga:</label>
+        <input type="text" id="cliente" placeholder="Tu nombre completo" required>
+
+        <label for="destinatario">Nombre y teléfono de quien recibe:</label>
+        <input type="text" id="destinatario" placeholder="Ej: María Pérez - 53XXXXXX" required>
+
+        <label for="direccion">Dirección exacta de entrega:</label>
+        <input type="text" id="direccion" placeholder="Calle, entre calles, reparto y punto de referencia" required>
+
+        <label for="descripcion">Detalle del encargo o compras a realizar:</label>
+        <textarea id="descripcion" rows="3" placeholder="Describe qué hay que llevar o comprar..." required></textarea>
+
+        <button type="submit" class="btn-whatsapp">Enviar Solicitud por WhatsApp</button>
+      </form>
+    </div>
+
+  </div>
+
+  <script>
+    // Base de datos de prueba para la búsqueda de pedidos
+    const baseDatosPedidos = {
+      "MG-101": {
+        estado: "En camino",
+        claseEstado: "status-proceso",
+        detalle: "El mensajero va en camino hacia la dirección de entrega.",
+        hora: "Hoy, 10:30 AM"
+      },
+      "MG-102": {
+        estado: "Entregado",
+        claseEstado: "status-entregado",
+        detalle: "Paquete entregado con éxito y confirmación tomada.",
+        hora: "Ayer, 4:15 PM"
+      }
+    };
+
+    function buscarPedido() {
+      const codigo = document.getElementById('orderInput').value.trim().toUpperCase();
+      const resultadoDiv = document.getElementById('statusResult');
+      
+      if (baseDatosPedidos[codigo]) {
+        const ped = baseDatosPedidos[codigo];
+        document.getElementById('resultCode').innerText = "Orden: " + codigo;
+        document.getElementById('resultBadge').innerText = ped.estado;
+        document.getElementById('resultBadge').className = "badge " + ped.claseEstado;
+        document.getElementById('resultDetail').innerText = ped.detalle;
+        document.getElementById('resultTime').innerText = ped.hora;
+        resultadoDiv.style.display = "block";
+      } else {
+        alert("El código ingresado no existe o aún está en proceso de registro.");
+        resultadoDiv.style.display = "none";
+      }
+    }
+
+    function generarPedido(e) {
+      e.preventDefault();
+      
+      const tipo = document.getElementById('tipoCarga').value;
+      const cliente = document.getElementById('cliente').value;
+      const destinatario = document.getElementById('destinatario').value;
+      const direccion = document.getElementById('direccion').value;
+      const descripcion = document.getElementById('descripcion').value;
+
+      // Mensaje formateado para enviar a tu WhatsApp de MoviGo
+      const mensaje = `*NUEVA SOLICITUD EN MOVIGO*%0A` +
+                      `*Tipo:* ${tipo}%0A` +
+                      `*Solicitante:* ${cliente}%0A` +
+                      `*Destinatario:* ${destinatario}%0A` +
+                      `*Dirección:* ${direccion}%0A` +
+                      `*Detalle:* ${descripcion}`;
+
+      // REEMPLAZA ESTE NÚMERO POR TU NÚMERO DE WHATSAPP REAL (con prefijo de país):
+      const telefonoWhatsApp = "+5355952402"; 
+      
+      window.open(`https://wa.me/${telefonoWhatsApp}?text=${mensaje}`, '_blank');
+    }
+  </script>
+</body>
+  </html>
+  
